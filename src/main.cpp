@@ -14,7 +14,6 @@
 #include <iostream>
 #include <vector>
 ros::Publisher pub;
-bool airborne;
 
 // Forces callback function
 void forcesCb(ConstContactsPtr &_msg){
@@ -22,60 +21,47 @@ void forcesCb(ConstContactsPtr &_msg){
     std::vector<contact_republisher::contact_msg> contacts_list;
     // What to do when callback
     for (int i = 0; i < _msg->contact_size(); ++i) {
-
         contact_republisher::contact_msg contact_message;
 
         contact_message.collision_1 = _msg->contact(i).collision1();
         contact_message.collision_2 = _msg->contact(i).collision2();
 
-        contact_message.normal[0] = _msg->contact(i).normal().Get(0).x();
-        contact_message.normal[1] = _msg->contact(i).normal().Get(0).y();
-        contact_message.normal[2] = _msg->contact(i).normal().Get(0).z();
-
-        contact_message.position[0] = _msg->contact(i).position().Get(0).x();
-        contact_message.position[1] = _msg->contact(i).position().Get(0).y();
-        contact_message.position[2] = _msg->contact(i).position().Get(0).z();
-
-        contact_message.depth = _msg->contact(i).depth().Get(0);
-
-        contacts_list.push_back(contact_message);
-    }
-    if ( _msg->contact_size()== 0){
-        contact_republisher::contact_msg contact_message;
-
-        contact_message.collision_1 = "default";
-        contact_message.collision_2 = "default";
-
-        contact_message.normal[0] = 0;
-        contact_message.normal[1] = 0;
-        contact_message.normal[2] = 0;
-
-        contact_message.position[0] = 0;
-        contact_message.position[1] = 0;
-        contact_message.position[2] = 0;
-
-        contact_message.depth = 0;
+        //  contact_message.normal[0] = _msg->contact(i).normal().Get(0).x();
+        //  contact_message.normal[1] = _msg->contact(i).normal().Get(0).y();
+        //  contact_message.normal[2] = _msg->contact(i).normal().Get(0).z();
+        //
+        //  contact_message.position[0] = _msg->contact(i).position().Get(0).x();
+        //  contact_message.position[1] = _msg->contact(i).position().Get(0).y();
+        //  contact_message.position[2] = _msg->contact(i).position().Get(0).z();
+        //
+        //  contact_message.depth = _msg->contact(i).depth().Get(0);
 
         contacts_list.push_back(contact_message);
     }
+//    if ( _msg->contact_size()== 0){
+//        contact_republisher::contact_msg contact_message;
+//
+//        contact_message.collision_1 = "default";
+//        contact_message.collision_2 = "default";
+//
+//        //  contact_message.normal[0] = 0;
+//        //  contact_message.normal[1] = 0;
+//        //  contact_message.normal[2] = 0;
+//        //
+//        //  contact_message.position[0] = 0;
+//        //  contact_message.position[1] = 0;
+//        //  contact_message.position[2] = 0;
+//        //
+//        //  contact_message.depth = 0;
+//
+//        contacts_list.push_back(contact_message);
+//    }
     contacts_message.contacts = contacts_list;
     pub.publish(contacts_message);
-
 }
 
-// Position callback function
-void positionCb(const nav_msgs::Odometry::ConstPtr& msg2){
-    if (msg2->pose.pose.position.z > 0.3) {
-        airborne = true;
-    } else {
-        airborne = false;
-    }
-}
 
 int main(int _argc, char **_argv){
-    // Set variables
-    airborne = false;
-
     // Load Gazebo & ROS
     gazebo::client::setup(_argc, _argv);
     ros::init(_argc, _argv, "force_measure");
@@ -91,21 +77,12 @@ int main(int _argc, char **_argv){
     // Listen to Gazebo contacts topic
     gazebo::transport::SubscriberPtr sub = node->Subscribe("/gazebo/default/physics/contacts", forcesCb);
 
-    // Listen to ROS for position
-    ros::Subscriber sub2 = n.subscribe("ground_truth/state", 1000, positionCb);
-
     // Busy wait loop...replace with your own code as needed.
-    // Busy wait loop...replace with your own code as needed.
-    while (true)
-    {
+    while (true){
         gazebo::common::Time::MSleep(20);
-
         // Spin ROS (needed for publisher) // (nope its actually for subscribers-calling callbacks ;-) )
         ros::spinOnce();
-
-
-    // Mayke sure to shut everything down.
-
     }
+    // Make sure to shut everything down.
     gazebo::client::shutdown();
 }
